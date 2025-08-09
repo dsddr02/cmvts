@@ -32,21 +32,60 @@ jobs:
         run: |
           curl -o 明文源码.js https://raw.githubusercontent.com/cmliu/edgetunnel/main/_worker.js
 
+      - name: 生成随机种子
+        id: random_seed
+        run: echo "::set-output name=seed::$RANDOM$RANDOM"
+
       - name: 混淆代码
         run: |
-          javascript-obfuscator 明文源码.js --output _worker.js \
-          --compact true \
-          --control-flow-flattening true \
-          --control-flow-flattening-threshold 1 \
-          --dead-code-injection true \
-          --dead-code-injection-threshold 1 \
-          --identifier-names-generator hexadecimal \
-          --rename-globals true \
-          --string-array true \
-          --string-array-encoding 'rc4' \
-          --string-array-threshold 1 \
-          --transform-object-keys true \
-          --unicode-escape-sequence true
+          # 混淆选项
+          COMPACT=true
+          CONTROL_FLOW_FLATTENING=true
+          CONTROL_FLOW_FLATTENING_THRESHOLD=1
+          DEAD_CODE_INJECTION=true
+          DEAD_CODE_INJECTION_THRESHOLD=1
+          IDENTIFIER_NAMES_GENERATOR=hexadecimal
+          RENAME_GLOBALS=true
+          STRING_ARRAY=true
+          STRING_ARRAY_ENCODING='rc4'
+          STRING_ARRAY_THRESHOLD=1
+          TRANSFORM_OBJECT_KEYS=true
+          UNICODE_ESCAPE_SEQUENCE=true
+
+          # 随机启用/禁用一些选项
+          if [[ $((RANDOM % 2)) -eq 0 ]]; then
+            CONTROL_FLOW_FLATTENING=false
+          fi
+          if [[ $((RANDOM % 2)) -eq 0 ]]; then
+            DEAD_CODE_INJECTION=false
+          fi
+          if [[ $((RANDOM % 2)) -eq 0 ]]; then
+            RENAME_GLOBALS=false
+          fi
+
+          # 构造混淆命令
+          OBFUSCATE_COMMAND="javascript-obfuscator 明文源码.js --output _worker.js"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --seed ${{ steps.random_seed.outputs.seed }}"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --compact $COMPACT"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --control-flow-flattening $CONTROL_FLOW_FLATTENING"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --control-flow-flattening-threshold $CONTROL_FLOW_FLATTENING_THRESHOLD"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --dead-code-injection $DEAD_CODE_INJECTION"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --dead-code-injection-threshold $DEAD_CODE_INJECTION_THRESHOLD"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --identifier-names-generator $IDENTIFIER_NAMES_GENERATOR"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --rename-globals $RENAME_GLOBALS"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --string-array $STRING_ARRAY"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --string-array-encoding '$STRING_ARRAY_ENCODING'"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --string-array-threshold $STRING_ARRAY_THRESHOLD"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --transform-object-keys $TRANSFORM_OBJECT_KEYS"
+          OBFUSCATE_COMMAND="$OBFUSCATE_COMMAND --unicode-escape-sequence $UNICODE_ESCAPE_SEQUENCE"
+
+          echo "执行混淆命令：$OBFUSCATE_COMMAND"
+          eval $OBFUSCATE_COMMAND
+
+      - name: 添加随机注释
+        run: |
+          RANDOM_COMMENT=$(echo "/* This is a random comment: $(date +%s%N) */")
+          echo "$RANDOM_COMMENT" >> _worker.js
 
       - name: 提交更改
         run: |
