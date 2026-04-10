@@ -1,8 +1,8 @@
-name = "v20251104"
+name = "cmvts"
 main = "_worker.js"
 compatibility_date = "2025-11-04"
 keep_vars = true
 
-#[[kv_namespaces]]
-#binding = "KV"			#KV绑定名默认不可修改
-#id = ""				#KV数据库id
+[[kv_namespaces]]
+binding = "KV"			#KV绑定名默认不可修改
+id = "8d7fdbb2402a4395855ac97ea7269824"				#KV数据库id
